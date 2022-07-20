@@ -1,4 +1,4 @@
-// g++ -std=c++11 -I ./eigen-3.4.0/ reshape_casting.cc -o reshape_casting
+// g++ -std=c++11 -lrt -I ./eigen-3.4.0/ reshape_casting.cc -o reshape_casting
 #include <iostream>
 #include <cmath>
 #include <Eigen/Dense>
@@ -6,12 +6,19 @@
  
 typedef Eigen::Matrix<int8_t, Eigen::Dynamic, Eigen::Dynamic> Matrix_int8;
 using Eigen::Tensor;
+
+inline uint64_t getNanoSecond(struct timespec tp){
+    clock_gettime(CLOCK_MONOTONIC, &tp);
+    return (1000000000) * (uint64_t)tp.tv_sec + tp.tv_nsec;
+}
  
 int main() {
+	struct timespec ts1,ts2;
 	uint32_t iterations = 2;//1024*1024;
 	uint32_t batch_size = 1024;
 
-	for(int iter = 0; iter < iterations; iter++){		
+	for(int iter = 0; iter < iterations; iter++){	
+		auto start = getNanoSecond(ts1);	
 		Eigen::Tensor<float, 3> input(16, 250, batch_size);
 		Eigen::Tensor<float, 3> const2(16, 250, batch_size);
 		Eigen::Tensor<float, 3> matmul(250, 250, batch_size);
@@ -37,5 +44,7 @@ int main() {
 		matmul = matmul.reshape(three_dims);
 		Eigen::Tensor<int8_t, 3> matmul_int8 = matmul.cast<int8_t>();
 		//std::cout << "dims:" << matmul_int8.dimension(0) << "," << matmul_int8.dimension(1) << "," << matmul_int8.dimension(2) << std::endl;
+		auto end = getNanoSecond(ts2);
+		std::cout << end - start << "ns \n";
 	}
 }
